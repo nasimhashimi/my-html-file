@@ -1,194 +1,96 @@
-<html>
-<head>
-    <title>Coin Tapper Game</title>
-    <script src="https://unpkg.com/react/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></link>
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-        }
-    </style>
-</head>
-<body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-
-        const Coins = ({ className, size }) => (
-            <i className={`fas fa-coins ${className}`} style={{ fontSize: size }}></i>
-        );
-
-        const ArrowUp = ({ className }) => (
-            <i className={`fas fa-arrow-up ${className}`}></i>
-        );
-
-        const Button = ({ onClick, disabled, className, children }) => (
-            <button onClick={onClick} disabled={disabled} className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${className}`}>
-                {children}
-            </button>
-        );
-
-        const Progress = ({ value }) => (
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${value}%` }}></div>
-            </div>
-        );
-
-        const Card = ({ children }) => (
-            <div className="bg-white shadow-md rounded-lg p-4">
-                {children}
-            </div>
-        );
-
-        const CardHeader = ({ children }) => (
-            <div className="mb-4">
-                {children}
-            </div>
-        );
-
-        const CardTitle = ({ children }) => (
-            <h2 className="text-xl font-bold">
-                {children}
-            </h2>
-        );
-
-        const CardContent = ({ children, className }) => (
-            <div className={className}>
-                {children}
-            </div>
-        );
-
-        function CoinTapperGame() {
-            const [coins, setCoins] = useState(0);
-            const [coinsPerTap, setCoinsPerTap] = useState(1);
-            const [coinsPerSecond, setCoinsPerSecond] = useState(0);
-            const [tapPowerUpgradeCost, setTapPowerUpgradeCost] = useState(10);
-            const [passiveIncomeCost, setPassiveIncomeCost] = useState(50);
-            const [tasks, setTasks] = useState([
-                { id: 1, description: 'Tap 50 times', goal: 50, progress: 0, reward: 20 },
-                { id: 2, description: 'Earn 100 coins', goal: 100, progress: 0, reward: 50 },
-                { id: 3, description: 'Buy 3 upgrades', goal: 3, progress: 0, reward: 100 },
-            ]);
-
-            useEffect(() => {
-                const timer = setInterval(() => {
-                    setCoins((prevCoins) => prevCoins + coinsPerSecond);
-                }, 1000);
-
-                return () => clearInterval(timer);
-            }, [coinsPerSecond]);
-
-            const handleTap = () => {
-                setCoins((prevCoins) => prevCoins + coinsPerTap);
-                updateTaskProgress(0, 1); // Update tapping task
-                updateTaskProgress(1, coinsPerTap); // Update coin earning task
-            };
-
-            const updateTaskProgress = (taskIndex, amount) => {
-                setTasks((prevTasks) =>
-                    prevTasks.map((task, index) =>
-                        index === taskIndex
-                            ? {
-                                ...task,
-                                progress: Math.min(task.progress + amount, task.goal),
-                            }
-                            : task
-                    )
-                );
-            };
-
-            const upgradeTapPower = () => {
-                if (coins >= tapPowerUpgradeCost) {
-                    setCoins((prevCoins) => prevCoins - tapPowerUpgradeCost);
-                    setCoinsPerTap((prevPower) => prevPower + 1);
-                    setTapPowerUpgradeCost((prevCost) => Math.floor(prevCost * 1.5));
-                    updateTaskProgress(2, 1); // Update upgrade task
-                }
-            };
-
-            const upgradePassiveIncome = () => {
-                if (coins >= passiveIncomeCost) {
-                    setCoins((prevCoins) => prevCoins - passiveIncomeCost);
-                    setCoinsPerSecond((prevIncome) => prevIncome + 1);
-                    setPassiveIncomeCost((prevCost) => Math.floor(prevCost * 2));
-                    updateTaskProgress(2, 1); // Update upgrade task
-                }
-            };
-
-            const claimReward = (taskId, reward) => {
-                setCoins((prevCoins) => prevCoins + reward);
-                setTasks((prevTasks) =>
-                    prevTasks.map((task) =>
-                        task.id === taskId ? { ...task, progress: 0, goal: Math.floor(task.goal * 1.5), reward: Math.floor(task.reward * 1.5) } : task
-                    )
-                );
-            };
-
-            return (
-                <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-100 to-blue-200 p-4">
-                    <h1 className="text-4xl font-bold mb-8 text-blue-800">Coin Tapper Game</h1>
-                    <div className="text-2xl font-semibold mb-4 text-yellow-600">
-                        <Coins className="inline-block mr-2" />
-                        {coins.toFixed(0)} coins
-                    </div>
-                    <div className="mb-4 text-blue-600">
-                        {coinsPerTap} coins per tap | {coinsPerSecond} coins per second
-                    </div>
-                    <button
-                        className="bg-yellow-400 hover:bg-yellow-500 text-yellow-800 font-bold py-4 px-8 rounded-full shadow-lg transform transition-transform duration-100 active:scale-95 mb-8"
-                        onClick={handleTap}
-                    >
-                        <Coins className="inline-block mr-2" size={32} />
-                        Tap to Earn!
-                    </button>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Upgrades</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <Button onClick={upgradeTapPower} disabled={coins < tapPowerUpgradeCost} className="w-full">
-                                    <ArrowUp className="mr-2" />
-                                    Upgrade Tap Power (Cost: {tapPowerUpgradeCost})
-                                </Button>
-                                <Button onClick={upgradePassiveIncome} disabled={coins < passiveIncomeCost} className="w-full">
-                                    <ArrowUp className="mr-2" />
-                                    Upgrade Passive Income (Cost: {passiveIncomeCost})
-                                </Button>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Tasks</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {tasks.map((task) => (
-                                    <div key={task.id} className="space-y-2">
-                                        <div className="flex justify-between">
-                                            <span>{task.description}</span>
-                                            <span>
-                                                {task.progress}/{task.goal}
-                                            </span>
-                                        </div>
-                                        <Progress value={(task.progress / task.goal) * 100} />
-                                        {task.progress >= task.goal && (
-                                            <Button onClick={() => claimReward(task.id, task.reward)} className="w-full">
-                                                Claim {task.reward} coins
-                                            </Button>
-                                        )}
-                                    </div>
-                                ))}
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            );
-        }
-
-        ReactDOM.render(<CoinTapperGame />, document.getElementById('root'));
-    </script>
-</body>
+<html lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Social Media Links
+  </title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&amp;display=swap" rel="stylesheet"/>
+ </head>
+ <body class="bg-gray-100 font-roboto">
+  <div class="container mx-auto p-4">
+   <div class="bg-white shadow-md rounded-lg p-6">
+    <h1 class="text-2xl font-bold mb-4">
+     My Social Media Links
+    </h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+     <!-- Facebook -->
+     <div class="flex items-center space-x-4 p-4 border rounded-lg">
+      <img alt="Facebook logo" class="w-12 h-12" height="50" src="https://storage.googleapis.com/a1aa/image/0jeOPZjwEzULDaFJUFYiFb28DzISfIu7BmzuIRgjkpTDkKfnA.jpg" width="50"/>
+      <div>
+       <h2 class="text-lg font-semibold">
+        Facebook
+       </h2>
+       <a class="text-blue-600" href="#">
+        https://facebook.com/yourprofile
+       </a>
+      </div>
+     </div>
+     <!-- Twitter -->
+     <div class="flex items-center space-x-4 p-4 border rounded-lg">
+      <img alt="Twitter logo" class="w-12 h-12" height="50" src="https://storage.googleapis.com/a1aa/image/PT7Dh5VUaFbIPNjHbvYNkcJuxKQf9hv6Hnqq5AEIvaSfjKfnA.jpg" width="50"/>
+      <div>
+       <h2 class="text-lg font-semibold">
+        Twitter
+       </h2>
+       <a class="text-blue-400" href="#">
+        https://twitter.com/yourprofile
+       </a>
+      </div>
+     </div>
+     <!-- Instagram -->
+     <div class="flex items-center space-x-4 p-4 border rounded-lg">
+      <img alt="Instagram logo" class="w-12 h-12" height="50" src="https://storage.googleapis.com/a1aa/image/3D1MNygnVbo9DRKlaeeF0LnrS3XNPvpAc4xCEYzeaYDAIVePB.jpg" width="50"/>
+      <div>
+       <h2 class="text-lg font-semibold">
+        Instagram
+       </h2>
+       <a class="text-pink-600" href="#">
+        https://instagram.com/yourprofile
+       </a>
+      </div>
+     </div>
+     <!-- LinkedIn -->
+     <div class="flex items-center space-x-4 p-4 border rounded-lg">
+      <img alt="LinkedIn logo" class="w-12 h-12" height="50" src="https://storage.googleapis.com/a1aa/image/ZbY07XAckh6jLJiTS4gExf0hg9Cd4fU24FGxiNFzKs78jKfnA.jpg" width="50"/>
+      <div>
+       <h2 class="text-lg font-semibold">
+        LinkedIn
+       </h2>
+       <a class="text-blue-700" href="#">
+        https://linkedin.com/in/yourprofile
+       </a>
+      </div>
+     </div>
+     <!-- YouTube -->
+     <div class="flex items-center space-x-4 p-4 border rounded-lg">
+      <img alt="YouTube logo" class="w-12 h-12" height="50" src="https://storage.googleapis.com/a1aa/image/tx0mV8CeGPXhLqvQVwXlIWTTDtZxFwNHvVRnfxjGBb9CkKfnA.jpg" width="50"/>
+      <div>
+       <h2 class="text-lg font-semibold">
+        YouTube
+       </h2>
+       <a class="text-red-600" href="#">
+        https://youtube.com/yourchannel
+       </a>
+      </div>
+     </div>
+     <!-- TikTok -->
+     <div class="flex items-center space-x-4 p-4 border rounded-lg">
+      <img alt="TikTok logo" class="w-12 h-12" height="50" src="https://storage.googleapis.com/a1aa/image/SfqGe1PzV1tfeQoPvUsUEsn1lejmucgfplsmGrfEl2yu9RlfTA.jpg" width="50"/>
+      <div>
+       <h2 class="text-lg font-semibold">
+        TikTok
+       </h2>
+       <a class="text-black" href="#">
+        https://tiktok.com/@yourprofile
+       </a>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+ </body>
 </html>
